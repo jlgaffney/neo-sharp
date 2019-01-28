@@ -135,8 +135,7 @@ namespace NeoSharp.Persistence.RedisDB
 
         public async Task<bool> ContainsTransaction(UInt256 hash)
         {
-            var transactionRedisValue = await _redisDbContext.Get(hash.BuildDataTransactionKey());
-            return !transactionRedisValue.IsNull;
+            return await _redisDbContext.Contains(hash.BuildDataTransactionKey());
         }
 
         #endregion
