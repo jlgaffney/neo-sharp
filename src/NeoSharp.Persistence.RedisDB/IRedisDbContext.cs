@@ -13,6 +13,8 @@ namespace NeoSharp.Persistence.RedisDB
 
         Task<RedisValue> Get(RedisKey key);
 
+        Task<bool> Contains(RedisKey key);
+
         Task<Dictionary<RedisKey, RedisValue>> GetMany(RedisKey[] keys);
 
         Task<bool> AddToIndex(RedisIndex index, UInt256 hash, double indexScore);

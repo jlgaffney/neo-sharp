@@ -45,6 +45,11 @@ namespace NeoSharp.Persistence.RedisDB
             return _redisDb.HashGetAsync(key, "data");
         }
 
+        public Task<bool> Contains(RedisKey key)
+        {
+            return _redisDb.KeyExistsAsync(key);
+        }
+
         public async Task<Dictionary<RedisKey, RedisValue>> GetMany(RedisKey[] keys)
         {
             var keyValueTasks = keys.ToDictionary(k => k, Get);
