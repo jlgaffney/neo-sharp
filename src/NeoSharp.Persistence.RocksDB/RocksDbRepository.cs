@@ -128,6 +128,12 @@ namespace NeoSharp.Persistence.RocksDB
             return rawTransaction == null ? null : _binarySerializer.Deserialize<Transaction>(rawTransaction);
         }
 
+        public async Task<bool> ContainsTransaction(UInt256 hash)
+        {
+            var rawTransaction = await _rocksDbContext.Get(hash.BuildDataTransactionKey());
+            return rawTransaction != null;
+        }
+
         #endregion
 
         #region IRepository State Members

@@ -93,6 +93,13 @@ namespace NeoSharp.Core.Persistence
         /// <returns>Transaction with the specified id / hash</returns>
         Task<Transaction> GetTransaction(UInt256 hash);
 
+        /// <summary>
+        /// Determine whether the specified transaction is in the repository
+        /// </summary>
+        /// <param name="hash">Identifier / hash of the transaction</param>
+        /// <returns>Return true if the specified transaction is in the repository</returns>
+        Task<bool> ContainsTransaction(UInt256 hash);
+
         #endregion
 
         #region State

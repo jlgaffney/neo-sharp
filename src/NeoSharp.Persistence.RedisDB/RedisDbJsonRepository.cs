@@ -133,6 +133,12 @@ namespace NeoSharp.Persistence.RedisDB
             return transactionRedisValue.IsNull ? null : _jsonConverter.DeserializeObject<Transaction>(transactionRedisValue);
         }
 
+        public async Task<bool> ContainsTransaction(UInt256 hash)
+        {
+            var transactionRedisValue = await _redisDbJsonContext.Get(hash.BuildDataTransactionKey());
+            return !transactionRedisValue.IsNull;
+        }
+
         #endregion
 
         #region IRepository State Members

@@ -172,6 +172,11 @@ namespace NeoSharp.Core.Test.SmartContracts
                 throw new System.NotImplementedException();
             }
 
+            public Task<bool> ContainsTransaction(UInt256 hash)
+            {
+                throw new System.NotImplementedException();
+            }
+
             public Task<Validator> GetValidator(ECPoint publicKey)
             {
                 throw new System.NotImplementedException();

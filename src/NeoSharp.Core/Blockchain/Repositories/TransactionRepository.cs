@@ -33,10 +33,10 @@ namespace NeoSharp.Core.Blockchain.Repositories
             return await _repository.GetTransaction(hash);
         }
 
+        /// <inheritdoc />
         public async Task<bool> ContainsTransaction(UInt256 hash)
         {
-            // TODO #389: Optimize this
-            return await GetTransaction(hash) != null;
+            return await _repository.ContainsTransaction(hash);
         }
 
         public async Task<IEnumerable<Transaction>> GetTransactions(IReadOnlyCollection<UInt256> transactionHashes)
