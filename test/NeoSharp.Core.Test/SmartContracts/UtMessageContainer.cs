@@ -13,6 +13,8 @@ namespace NeoSharp.Core.Test.SmartContracts
         [TestMethod]
         public void TestMessageContainer()
         {
+            BinarySerializer.RegisterTypes(typeof(Transaction).Assembly);
+            
             var tx = new MinerTransaction();
             var messageContainer = new MessageContainer(BinarySerializer.Default);
 

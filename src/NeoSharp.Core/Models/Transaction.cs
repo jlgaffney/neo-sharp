@@ -49,7 +49,7 @@ namespace NeoSharp.Core.Models
 
         [BinaryProperty(255)]
         [JsonProperty("witness")]
-        public Witness[] Witness;
+        public Witness[] Witness = new Witness[0];
 
         #endregion
 
