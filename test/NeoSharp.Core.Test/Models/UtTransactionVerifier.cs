@@ -272,7 +272,7 @@ namespace NeoSharp.Core.Test.Models
         {
             var testee = AutoMockContainer.Create<TransactionOperationManager>();
 
-            var transaction = new Transaction
+            var transaction = new ContractTransaction
             {
                 Attributes = new []
                 {
