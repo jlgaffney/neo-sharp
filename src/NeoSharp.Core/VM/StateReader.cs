@@ -200,6 +200,11 @@ namespace NeoSharp.Core.VM
 
         protected bool CheckWitness(IExecutionEngine engine, UInt160 hash)
         {
+            if (hash.Equals(UInt160.Zero))
+            {
+                return true;
+            }
+
             var transaction = (InvocationTransaction)engine.MessageProvider.GetMessage(0);
             var hashesForVerifying = _transactionOperationsManager.GetScriptHashes(transaction).Result;
             return hashesForVerifying.Contains(hash);
@@ -460,7 +465,7 @@ namespace NeoSharp.Core.VM
         {
             var block = engine.CurrentContext.EvaluationStack.PopObject<Block>();
             if (block == null) return false;
-
+            
             var index = (int)engine.CurrentContext.EvaluationStack.PopBigInteger();
             if (index < 0 || index >= block.Transactions.Length) return false;
 

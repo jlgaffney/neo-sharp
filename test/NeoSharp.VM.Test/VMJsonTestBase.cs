@@ -336,22 +336,22 @@ namespace NeoSharp.VM.Test
         /// <summary>
         /// Assert with message
         /// </summary>
-        /// <param name="a">A</param>
-        /// <param name="b">B</param>
+        /// <param name="actualObj">Actual object</param>
+        /// <param name="expectedObj">Expected object</param>
         /// <param name="message">Message</param>
-        private void AssertAreEqual(object a, object b, string message)
+        private void AssertAreEqual(object actualObj, object expectedObj, string message)
         {
-            if (a is byte[] ba) a = ba.ToHexString().ToUpperInvariant();
-            if (b is byte[] bb) b = bb.ToHexString().ToUpperInvariant();
+            if (actualObj is byte[] actualBytes) actualObj = actualBytes.ToHexString().ToUpperInvariant();
+            if (expectedObj is byte[] expectedBytes) expectedObj = expectedBytes.ToHexString().ToUpperInvariant();
 
-            if (a is IList ca && b is IList cb)
+            if (actualObj is IList actualCollection && expectedObj is IList expectedCollection)
             {
-                a = a.ToJson();
-                b = b.ToJson();
+                actualObj = actualObj.ToJson();
+                expectedObj = expectedObj.ToJson();
             }
 
-            Assert.AreEqual(a, b, message +
-                $"{Environment.NewLine}Expected:{Environment.NewLine + a.ToString() + Environment.NewLine}Actual:{Environment.NewLine + b.ToString()}");
+            Assert.AreEqual(expectedObj, actualObj, message +
+                $"{Environment.NewLine}Expected:{Environment.NewLine + expectedObj.ToString() + Environment.NewLine}Actual:{Environment.NewLine + actualObj.ToString()}");
         }
     }
 }
