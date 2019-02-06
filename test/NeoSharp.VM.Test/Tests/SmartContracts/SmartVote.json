@@ -67,10 +67,10 @@
                     "state":
                     {
                         "state": "None",
-                        "consumedGas": 1900000,
+                        "consumedGas": 1600000,
                         "logs":
                         [
-                            "Yes!"
+                            "You are not who you say"
                         ],
                         "invocationStack":
                         [
@@ -81,8 +81,8 @@
                                 "evaluationStack":
                                 [
                                     {
-                                        "type": "Integer",
-                                        "value": 1
+                                        "type": "ByteArray",
+                                        "value": ""
                                     },
                                     {
                                         "type": "Integer",
@@ -104,11 +104,11 @@
                         "logs":
                         [
                             "My proposal",
-                            "1",
+                            "0",
                             "0"
                         ],
                         "state": "Halt",
-                        "consumedGas": 14000000,
+                        "consumedGas": 13700000,
                         "resultStack":
                         [
                             {
@@ -116,8 +116,8 @@
                                 "value": 1
                             },
                             {
-                                "type": "Integer",
-                                "value": 1
+                                "type": "ByteArray",
+                                "value": ""
                             },
                             {
                                 "type": "Integer",
@@ -192,10 +192,10 @@
                     "state":
                     {
                         "state": "None",
-                        "consumedGas": 1900000,
+                        "consumedGas": 1600000,
                         "logs":
                         [
-                            "Yes!"
+                            "You are not who you say"
                         ],
                         "invocationStack":
                         [
@@ -206,8 +206,8 @@
                                 "evaluationStack":
                                 [
                                     {
-                                        "type": "Integer",
-                                        "value": 1
+                                        "type": "ByteArray",
+                                        "value": ""
                                     },
                                     {
                                         "type": "Integer",
@@ -229,11 +229,11 @@
                         "logs":
                         [
                             "My proposal",
-                            "1",
+                            "0",
                             "0"
                         ],
                         "state": "Halt",
-                        "consumedGas": 14000000,
+                        "consumedGas": 13700000,
                         "resultStack":
                         [
                             {
@@ -241,8 +241,8 @@
                                 "value": 1
                             },
                             {
-                                "type": "Integer",
-                                "value": 1
+                                "type": "ByteArray",
+                                "value": ""
                             },
                             {
                                 "type": "Integer",

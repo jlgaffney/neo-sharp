@@ -200,9 +200,9 @@ namespace NeoSharp.Core.VM
 
         protected bool CheckWitness(IExecutionEngine engine, UInt160 hash)
         {
-            if (hash.Equals(UInt160.Zero))
+            if (engine.MessageProvider == null || _transactionOperationsManager == null)
             {
-                return true;
+                return false;
             }
 
             var transaction = (InvocationTransaction)engine.MessageProvider.GetMessage(0);
