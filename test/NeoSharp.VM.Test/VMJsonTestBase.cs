@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
+using NeoSharp.BinarySerialization;
 using NeoSharp.Core.Extensions;
 using NeoSharp.Core.Models;
 using NeoSharp.Core.VM;
@@ -35,7 +36,7 @@ namespace NeoSharp.VM.Test
             foreach (var test in ut.Tests)
             {
                 // Arguments
-
+                
                 var storages = new ManualStorage();
                 var interopService = new InteropService();
                 var contracts = new ManualContracts();
@@ -71,7 +72,17 @@ namespace NeoSharp.VM.Test
 
                 if (test.Message != null)
                 {
-                    args.MessageProvider = new ManualMessageProvider(test.Message, test.Message);
+                    object testMessageObj;
+                    try
+                    {
+                        testMessageObj = BinarySerializer.Default.Deserialize<InvocationTransaction>(test.Message);
+                    }
+                    catch
+                    {
+                        testMessageObj = test.Message;
+                    }
+
+                    args.MessageProvider = new ManualMessageProvider(testMessageObj, test.Message);
                 }
 
 
