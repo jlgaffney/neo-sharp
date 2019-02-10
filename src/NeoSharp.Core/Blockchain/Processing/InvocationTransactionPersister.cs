@@ -1,6 +1,5 @@
 using System;
 using System.Threading.Tasks;
-using NeoSharp.BinarySerialization;
 using NeoSharp.Core.DI;
 using NeoSharp.Core.Logging;
 using NeoSharp.Core.Models;
@@ -11,16 +10,13 @@ namespace NeoSharp.Core.Blockchain.Processing
     public class InvocationTransactionPersister : ITransactionPersister<InvocationTransaction>
     {
         private readonly IVMFactory _vmFactory;
-        private readonly IBinarySerializer _binarySerializer;
         private readonly IContainer _container;
 
         public InvocationTransactionPersister(
             IVMFactory vmFactory,
-            IBinarySerializer binarySerializer,
             IContainer container)
         {
             _vmFactory = vmFactory ?? throw new ArgumentNullException(nameof(vmFactory));
-            _binarySerializer = binarySerializer ?? throw new ArgumentNullException(nameof(binarySerializer));
             _container = container ?? throw new ArgumentNullException(nameof(container));
         }
 
@@ -47,9 +43,7 @@ namespace NeoSharp.Core.Blockchain.Processing
 
         private void PrepareMessage(InvocationTransaction transaction, IMessageContainer messageContainer)
         {
-            var message = _binarySerializer.Serialize(transaction);
-
-            messageContainer.RegisterMessage(message);
+            messageContainer.RegisterMessage(transaction);
         }
 
         private static ExecutionEngineArgs GetExecutionEngineArgs(IContainer container, IMessageProvider messageProvider)
