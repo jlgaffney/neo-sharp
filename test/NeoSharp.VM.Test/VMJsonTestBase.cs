@@ -4,10 +4,16 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
+using Moq;
 using NeoSharp.BinarySerialization;
+using NeoSharp.Core.Blockchain.Repositories;
 using NeoSharp.Core.Extensions;
 using NeoSharp.Core.Models;
+using NeoSharp.Core.Models.OperationManager;
+using NeoSharp.Core.Network;
+using NeoSharp.Core.Types;
 using NeoSharp.Core.VM;
+using NeoSharp.Cryptography;
 using NeoSharp.Types.ExtensionMethods;
 using NeoSharp.VM.Extensions;
 using NeoSharp.VM.TestHelper;
@@ -37,13 +43,30 @@ namespace NeoSharp.VM.Test
             {
                 // Arguments
                 
+                var crypto = Crypto.Default;
+
+                BinarySerializer.RegisterTypes(typeof(Transaction).Assembly);
+                var binarySerializer = BinarySerializer.Default;
+
+                var blockchainContext = new Mock<IBlockchainContext>().Object;
+
+                var blockRepository = new Mock<IBlockRepository>().Object;
+                var transactionRepository = new Mock<ITransactionRepository>().Object;
+                var assetRepository = new Mock<IAssetRepository>().Object;
+
+                var witnessOperationManager = new WitnessOperationsManager(crypto);
+                var transactionOperationManager = new TransactionOperationManager(crypto, binarySerializer, witnessOperationManager, transactionRepository, assetRepository, new TransactionContext());
+
+    
                 var storages = new ManualStorage();
                 var interopService = new InteropService();
                 var contracts = new ManualContracts();
                 var state = new StateMachine
                 (
-                    null, null, null, contracts,
-                    storages, interopService, null, null, null, null
+                    null, null, null, contracts, storages,
+                    interopService, blockchainContext,
+                    blockRepository, transactionRepository,
+                    transactionOperationManager
                 );
 
                 var args = new ExecutionEngineArgs
@@ -75,7 +98,7 @@ namespace NeoSharp.VM.Test
                     object testMessageObj;
                     try
                     {
-                        testMessageObj = BinarySerializer.Default.Deserialize<InvocationTransaction>(test.Message);
+                        testMessageObj = binarySerializer.Deserialize<InvocationTransaction>(test.Message);
                     }
                     catch
                     {

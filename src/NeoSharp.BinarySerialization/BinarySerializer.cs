@@ -135,7 +135,7 @@ namespace NeoSharp.BinarySerialization
             // Search in cache
 
             if (!BinarySerializerCache.Cache.TryGetValue(typeof(T), out var cache))
-                throw new KeyNotFoundException("The type is not registered");
+                throw new KeyNotFoundException($"The type ({typeof(T).FullName}) is not registered");
 
             // Deserialize
 
