@@ -22,6 +22,7 @@ namespace NeoSharp.Persistence.RocksDB
         private readonly byte[] _sysCurrentTransactionKey = { (byte)DataEntryPrefix.SysCurrentTransaction };
         private readonly byte[] _sysVersionKey = {(byte) DataEntryPrefix.SysVersion};
         private readonly byte[] _indexHeightKey = {(byte) DataEntryPrefix.IxIndexHeight};
+        private readonly byte[] _stValidatorPublicKeys = { (byte)DataEntryPrefix.StValidatorPublicKeys };
 
         #endregion
 
@@ -174,6 +175,35 @@ namespace NeoSharp.Persistence.RocksDB
             await _rocksDbContext.Delete(txHash.BuildStateCoinKey());
         }
 
+        public async Task<IEnumerable<Validator>> GetValidators()
+        {
+            var rawValidatorsPublicKeys = await _rocksDbContext.Get(_stValidatorPublicKeys);
+
+            if (rawValidatorsPublicKeys == null)
+            {
+                return Enumerable.Empty<Validator>();
+            }
+
+            var validatorsPublicKeys = _binarySerializer.Deserialize<ECPoint[]>(rawValidatorsPublicKeys);
+
+            var rawValidators = await _rocksDbContext.GetMany(validatorsPublicKeys.Select(publicKey => publicKey.BuildStateValidatorKey()));
+
+            var validators = new List<Validator>(rawValidators.Count);
+
+            foreach (var rawValidator in rawValidators.Values)
+            {
+                if (rawValidator == null)
+                {
+                    continue;
+                }
+
+                var validator = _binarySerializer.Deserialize<Validator>(rawValidator);
+                validators.Add(validator);
+            }
+
+            return validators;
+        }
+
         public async Task<Validator> GetValidator(ECPoint publicKey)
         {
             var raw = await _rocksDbContext.Get(publicKey.BuildStateValidatorKey());
@@ -184,12 +214,45 @@ namespace NeoSharp.Persistence.RocksDB
 
         public async Task AddValidator(Validator validator)
         {
+            var rawValidatorsPublicKeys = await _rocksDbContext.Get(_stValidatorPublicKeys);
+
+            List<ECPoint> validatorsPublicKeys;
+            if (rawValidatorsPublicKeys == null)
+            {
+                validatorsPublicKeys = new List<ECPoint>(1);
+            }
+            else
+            {
+                validatorsPublicKeys = _binarySerializer.Deserialize<ECPoint[]>(rawValidatorsPublicKeys).ToList();
+            }
+
+            if (!validatorsPublicKeys.Contains(validator.PublicKey))
+            {
+                validatorsPublicKeys.Add(validator.PublicKey);
+            }
+
+            await _rocksDbContext.Save(_stValidatorPublicKeys, _binarySerializer.Serialize(validatorsPublicKeys.ToArray()));
+
             await _rocksDbContext.Save(validator.PublicKey.BuildStateValidatorKey(), _binarySerializer.Serialize(validator));
         }
 
-        public async Task DeleteValidator(ECPoint point)
+        public async Task DeleteValidator(ECPoint publicKey)
         {
-            await _rocksDbContext.Delete(point.BuildStateValidatorKey());
+            var rawValidatorsPublicKeys = await _rocksDbContext.Get(_stValidatorPublicKeys);
+            
+            if (rawValidatorsPublicKeys != null)
+            {
+                var validatorsPublicKeys = _binarySerializer.Deserialize<ECPoint[]>(rawValidatorsPublicKeys).ToList();
+
+                if (validatorsPublicKeys.Contains(publicKey))
+                {
+                    validatorsPublicKeys.Remove(publicKey);
+                }
+
+                await _rocksDbContext.Save(_stValidatorPublicKeys, _binarySerializer.Serialize(validatorsPublicKeys.ToArray()));
+            }
+
+            await _rocksDbContext.Delete(publicKey.BuildStateValidatorKey());
         }
 
         public async Task<Asset> GetAsset(UInt256 assetId)

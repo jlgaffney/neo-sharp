@@ -7,6 +7,7 @@
         StAccount = 0x40,
         StCoin = 0x44,
         StSpentCoin = 0x45,
+        StValidatorPublicKeys = 0x47,
         StValidator = 0x48,
         StAsset = 0x4c,
         StContract = 0x50,
