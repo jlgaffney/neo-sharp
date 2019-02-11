@@ -25,6 +25,11 @@ namespace NeoSharp.VM.Test
 {
     public abstract class VMJsonTestBase
     {
+        static VMJsonTestBase()
+        {
+            BinarySerializer.RegisterTypes(typeof(Transaction).Assembly);
+        }
+
         /// <summary>
         /// Execute this test
         /// </summary>
@@ -45,7 +50,6 @@ namespace NeoSharp.VM.Test
                 
                 var crypto = Crypto.Default;
 
-                BinarySerializer.RegisterTypes(typeof(Transaction).Assembly);
                 var binarySerializer = BinarySerializer.Default;
 
                 var blockchainContext = new Mock<IBlockchainContext>().Object;
