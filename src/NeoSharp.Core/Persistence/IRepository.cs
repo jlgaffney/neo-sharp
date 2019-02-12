@@ -148,6 +148,12 @@ namespace NeoSharp.Core.Persistence
         Task DeleteCoinStates(UInt256 txHash);
 
         /// <summary>
+        /// Retrieves all validators
+        /// </summary>
+        /// <returns></returns>
+        Task<IEnumerable<Validator>> GetValidators();
+
+        /// <summary>
         /// Retrieves a validator by its public key
         /// </summary>
         /// <param name="publicKey"></param>
@@ -164,9 +170,9 @@ namespace NeoSharp.Core.Persistence
         /// <summary>
         /// Deletes a validator
         /// </summary>
-        /// <param name="point"></param>
+        /// <param name="publicKey"></param>
         /// <returns></returns>
-        Task DeleteValidator(ECPoint point);
+        Task DeleteValidator(ECPoint publicKey);
 
         /// <summary>
         /// Retrieves an assetId by its assetId

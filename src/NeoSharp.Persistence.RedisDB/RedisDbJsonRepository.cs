@@ -22,6 +22,7 @@ namespace NeoSharp.Persistence.RedisDB
         private readonly string _sysCurrentBlockHeaderKey = DataEntryPrefix.SysCurrentHeader.ToString();
         private readonly string _sysCurrentTransactionKey = DataEntryPrefix.SysCurrentTransaction.ToString();
         private readonly string _sysVersionKey = DataEntryPrefix.SysVersion.ToString();
+        private readonly string _stValidatorPublicKeys = DataEntryPrefix.StValidatorPublicKeys.ToString();
 
         #endregion
 
@@ -174,6 +175,35 @@ namespace NeoSharp.Persistence.RedisDB
             await _redisDbJsonContext.Delete(txHash.BuildStateCoinKey());
         }
 
+        public async Task<IEnumerable<Validator>> GetValidators()
+        {
+            var rawValidatorsPublicKeys = await _redisDbJsonContext.Get(_stValidatorPublicKeys);
+
+            if (rawValidatorsPublicKeys.IsNull)
+            {
+                return Enumerable.Empty<Validator>();
+            }
+
+            var validatorsPublicKeys = _jsonConverter.DeserializeObject<ECPoint[]>(rawValidatorsPublicKeys);
+
+            var rawValidators = await _redisDbJsonContext.GetMany(validatorsPublicKeys.Select(publicKey => (RedisKey)publicKey.BuildStateValidatorKey()).ToArray());
+
+            var validators = new List<Validator>(rawValidators.Count);
+
+            foreach (var rawValidator in rawValidators.Values)
+            {
+                if (rawValidator.IsNull)
+                {
+                    continue;
+                }
+
+                var validator = _jsonConverter.DeserializeObject<Validator>(rawValidator);
+                validators.Add(validator);
+            }
+
+            return validators;
+        }
+
         public async Task<Validator> GetValidator(ECPoint publicKey)
         {
             var raw = await _redisDbJsonContext.Get(publicKey.BuildStateValidatorKey());
@@ -182,12 +212,45 @@ namespace NeoSharp.Persistence.RedisDB
 
         public async Task AddValidator(Validator validator)
         {
+            var rawValidatorsPublicKeys = await _redisDbJsonContext.Get(_stValidatorPublicKeys);
+
+            List<ECPoint> validatorsPublicKeys;
+            if (rawValidatorsPublicKeys.IsNull)
+            {
+                validatorsPublicKeys = new List<ECPoint>(1);
+            }
+            else
+            {
+                validatorsPublicKeys = _jsonConverter.DeserializeObject<ECPoint[]>(rawValidatorsPublicKeys).ToList();
+            }
+
+            if (!validatorsPublicKeys.Contains(validator.PublicKey))
+            {
+                validatorsPublicKeys.Add(validator.PublicKey);
+            }
+
+            await _redisDbJsonContext.Set(_stValidatorPublicKeys, _jsonConverter.SerializeObject(validatorsPublicKeys.ToArray()));
+            
             await _redisDbJsonContext.Set(validator.PublicKey.BuildStateValidatorKey(), _jsonConverter.SerializeObject(validator));
         }
 
-        public async Task DeleteValidator(ECPoint point)
+        public async Task DeleteValidator(ECPoint publicKey)
         {
-            await _redisDbJsonContext.Delete(point.BuildStateValidatorKey());
+            var rawValidatorsPublicKeys = await _redisDbJsonContext.Get(_stValidatorPublicKeys);
+
+            if (!rawValidatorsPublicKeys.IsNull)
+            {
+                var validatorsPublicKeys = _jsonConverter.DeserializeObject<ECPoint[]>(rawValidatorsPublicKeys).ToList();
+
+                if (validatorsPublicKeys.Contains(publicKey))
+                {
+                    validatorsPublicKeys.Remove(publicKey);
+                }
+
+                await _redisDbJsonContext.Set(_stValidatorPublicKeys, _jsonConverter.SerializeObject(validatorsPublicKeys.ToArray()));
+            }
+
+            await _redisDbJsonContext.Delete(publicKey.BuildStateValidatorKey());
         }
 
         public async Task<Asset> GetAsset(UInt256 assetId)

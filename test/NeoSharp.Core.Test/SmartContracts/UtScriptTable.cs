@@ -177,6 +177,11 @@ namespace NeoSharp.Core.Test.SmartContracts
                 throw new System.NotImplementedException();
             }
 
+            public Task<IEnumerable<Validator>> GetValidators()
+            {
+                throw new System.NotImplementedException();
+            }
+
             public Task<Validator> GetValidator(ECPoint publicKey)
             {
                 throw new System.NotImplementedException();
