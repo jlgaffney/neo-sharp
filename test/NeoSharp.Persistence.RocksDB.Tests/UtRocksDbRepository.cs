@@ -11,6 +11,7 @@ using NeoSharp.Core.Models;
 using NeoSharp.Core.Persistence;
 using NeoSharp.TestHelpers;
 using NeoSharp.Types;
+using NeoSharp.Types.ExtensionMethods;
 
 namespace NeoSharp.Persistence.RocksDB.Tests
 {
@@ -398,6 +399,60 @@ namespace NeoSharp.Persistence.RocksDB.Tests
             await testee.DeleteCoinStates(input);
 
             rocksDbContextMock.Verify(m => m.Delete(It.Is<byte[]>(b => b.SequenceEqual(input.BuildStateCoinKey()))));
+        }
+
+        [TestMethod]
+        public async Task GetValidators_NoValue_ReturnsEmptyIEnumerable()
+        {
+            var rocksDbContextMock = AutoMockContainer.GetMock<IRocksDbContext>();
+            rocksDbContextMock
+                .Setup(m => m.Get(It.IsAny<byte[]>()))
+                .ReturnsAsync((byte[])null);
+            var testee = AutoMockContainer.Create<RocksDbRepository>();
+
+            var result = await testee.GetValidators();
+
+            result.Should().BeEmpty();
+        }
+
+        [TestMethod]
+        public async Task GetValidators_ValueFound_ReturnsValidators()
+        {
+            BinarySerializer.RegisterTypes(typeof(ECPoint));
+            BinarySerializer.RegisterTypes(typeof(Validator));
+
+            var pubKeyBytes1 = "0238356c74a1ab4d40df857b790e4232180e2f99f5c78468c150d0903a3e5d2b6f".HexToBytes();
+            var pubKeyBytes2 = "0324de2cc4fe4b20963a5bae8cdcd52f431cd08ab331197e70e1d66d94ff35dda2".HexToBytes();
+
+            var pubKey1 = new ECPoint(pubKeyBytes1);
+            var pubKey2 = new ECPoint(pubKeyBytes2);
+
+            var validator1 = new Validator(pubKey1);
+            var validator2 = new Validator(pubKey2);
+
+            var binarySerializer = BinarySerializer.Default;
+
+            var rocksDbContextMock = AutoMockContainer.GetMock<IRocksDbContext>();
+
+            var validatorPubKeys = new[] { pubKey1, pubKey2 };
+            var validatorPubKeysRocksDbKeys = validatorPubKeys.Select(pubKey => pubKey.BuildStateValidatorKey()).ToArray();
+
+            var validatorPubKeysRocksDbKey = new[] {(byte) DataEntryPrefix.StValidatorPublicKeys};
+
+            rocksDbContextMock
+                .Setup(m => m.Get(It.Is<byte[]>(b => b.SequenceEqual(validatorPubKeysRocksDbKey))))
+                .ReturnsAsync(binarySerializer.Serialize(validatorPubKeys));
+
+            rocksDbContextMock
+                .Setup(m => m.GetMany(It.Is<byte[][]>(b => b == validatorPubKeysRocksDbKeys)))
+                .ReturnsAsync(new Dictionary<byte[], byte[]> { { pubKey1.BuildStateValidatorKey(), binarySerializer.Serialize(validator1) }, { pubKey2.BuildStateValidatorKey(), binarySerializer.Serialize(validator2) } });
+            
+
+            var testee = AutoMockContainer.Create<RocksDbRepository>();
+
+            var result = await testee.GetValidators();
+
+            result.Should().BeEquivalentTo(validator1, validator2);
         }
 
         [TestMethod]

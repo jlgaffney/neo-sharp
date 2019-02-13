@@ -1,9 +1,11 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 using FluentAssertions;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Moq;
+using NeoSharp.BinarySerialization;
 using NeoSharp.Core.Cryptography;
 using NeoSharp.Core.Models;
 using NeoSharp.Core.Persistence;
@@ -11,6 +13,7 @@ using NeoSharp.Persistence.RedisDB;
 using NeoSharp.Persistence.RedisDB.Helpers;
 using NeoSharp.TestHelpers;
 using NeoSharp.Types;
+using NeoSharp.Types.ExtensionMethods;
 using StackExchange.Redis;
 
 namespace NeoSharp.Persistence.Redis.Tests
@@ -385,6 +388,55 @@ namespace NeoSharp.Persistence.Redis.Tests
             await testee.DeleteCoinStates(input);
 
             redisDbContextMock.Verify(m => m.Delete(It.Is<RedisKey>(b => b == input.BuildStateCoinKey())));
+        }
+
+        [TestMethod]
+        public async Task GetValidators_NoValue_ReturnsEmptyIEnumerable()
+        {
+            var redisDbContextMock = AutoMockContainer.GetMock<IRedisDbJsonContext>();
+            redisDbContextMock
+                .Setup(m => m.Get(It.IsAny<RedisKey>()))
+                .ReturnsAsync(RedisValue.Null);
+            var testee = AutoMockContainer.Create<RedisDbJsonRepository>();
+
+            var result = await testee.GetValidators();
+
+            result.Should().BeEmpty();
+        }
+
+        [TestMethod]
+        public async Task GetValidators_ValueFound_ReturnsValidators()
+        {
+            var pubKeyBytes1 = "0238356c74a1ab4d40df857b790e4232180e2f99f5c78468c150d0903a3e5d2b6f".HexToBytes();
+            var pubKeyBytes2 = "0324de2cc4fe4b20963a5bae8cdcd52f431cd08ab331197e70e1d66d94ff35dda2".HexToBytes();
+
+            var pubKey1 = new ECPoint(pubKeyBytes1);
+            var pubKey2 = new ECPoint(pubKeyBytes2);
+
+            var validator1 = new Validator(pubKey1);
+            var validator2 = new Validator(pubKey2);
+
+            var jsonConverter = new JsonConverter();
+
+            var redisDbContextMock = AutoMockContainer.GetMock<IRedisDbJsonContext>();
+
+            var validatorPubKeys = new[] {pubKey1, pubKey2};
+            var validatorPubKeyRedisKeys = validatorPubKeys.Select(pubKey => (RedisKey)pubKey.BuildStateValidatorKey()).ToArray();
+
+            redisDbContextMock
+                .Setup(m => m.Get(It.Is<RedisKey>(b => b == DataEntryPrefix.StValidatorPublicKeys.ToString())))
+                .ReturnsAsync(jsonConverter.SerializeObject(validatorPubKeys));
+
+            redisDbContextMock
+                .Setup(m => m.GetMany(It.Is<RedisKey[]>(b => b == validatorPubKeyRedisKeys)))
+                .ReturnsAsync(new Dictionary<RedisKey, RedisValue>{ { pubKey1.BuildStateValidatorKey(), jsonConverter.SerializeObject(validator1)},{ pubKey2.BuildStateValidatorKey(), jsonConverter.SerializeObject(validator2) }});
+            
+
+            var testee = AutoMockContainer.Create<RedisDbJsonRepository>();
+
+            var result = await testee.GetValidators();
+
+            result.Should().BeEquivalentTo(validator1, validator2);
         }
 
         [TestMethod]

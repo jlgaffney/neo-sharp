@@ -3,6 +3,7 @@ using NeoSharp.Core.Cryptography;
 using NeoSharp.Core.Models;
 using NeoSharp.Core.Persistence;
 using NeoSharp.Types;
+using NeoSharp.VM.Extensions;
 
 namespace NeoSharp.Persistence.RedisDB
 {
@@ -45,7 +46,7 @@ namespace NeoSharp.Persistence.RedisDB
 
         public static string BuildStateValidatorKey(this ECPoint point)
         {
-            return DataEntryPrefix.StValidator.BuildKey(point.EncodedData.ToString());
+            return DataEntryPrefix.StValidator.BuildKey(point.EncodedData.ToHexString());
         }
 
         public static string BuildIxHeightToHashKey(this uint index)
