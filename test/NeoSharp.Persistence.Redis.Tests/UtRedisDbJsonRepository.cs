@@ -5,7 +5,6 @@ using System.Threading.Tasks;
 using FluentAssertions;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Moq;
-using NeoSharp.BinarySerialization;
 using NeoSharp.Core.Cryptography;
 using NeoSharp.Core.Models;
 using NeoSharp.Core.Persistence;
@@ -418,18 +417,23 @@ namespace NeoSharp.Persistence.Redis.Tests
 
             var jsonConverter = new JsonConverter();
 
-            var redisDbContextMock = AutoMockContainer.GetMock<IRedisDbJsonContext>();
+            AutoMockContainer.Register(jsonConverter);
 
             var validatorPubKeys = new[] {pubKey1, pubKey2};
             var validatorPubKeyRedisKeys = validatorPubKeys.Select(pubKey => (RedisKey)pubKey.BuildStateValidatorKey()).ToArray();
+            
+            var redisDbContextMock = AutoMockContainer.GetMock<IRedisDbJsonContext>();
 
             redisDbContextMock
                 .Setup(m => m.Get(It.Is<RedisKey>(b => b == DataEntryPrefix.StValidatorPublicKeys.ToString())))
                 .ReturnsAsync(jsonConverter.SerializeObject(validatorPubKeys));
-
             redisDbContextMock
-                .Setup(m => m.GetMany(It.Is<RedisKey[]>(b => b == validatorPubKeyRedisKeys)))
-                .ReturnsAsync(new Dictionary<RedisKey, RedisValue>{ { pubKey1.BuildStateValidatorKey(), jsonConverter.SerializeObject(validator1)},{ pubKey2.BuildStateValidatorKey(), jsonConverter.SerializeObject(validator2) }});
+                .Setup(m => m.GetMany(It.Is<RedisKey[]>(b => b.SequenceEqual(validatorPubKeyRedisKeys))))
+                .ReturnsAsync(new Dictionary<RedisKey, RedisValue>
+                {
+                    { pubKey1.BuildStateValidatorKey(), jsonConverter.SerializeObject(validator1)},
+                    { pubKey2.BuildStateValidatorKey(), jsonConverter.SerializeObject(validator2) }
+                });
             
 
             var testee = AutoMockContainer.Create<RedisDbJsonRepository>();

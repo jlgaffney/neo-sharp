@@ -428,18 +428,23 @@ namespace NeoSharp.Persistence.Redis.Tests
 
             var binarySerializer = BinarySerializer.Default;
 
-            var redisDbContextMock = AutoMockContainer.GetMock<IRedisDbContext>();
+            AutoMockContainer.Register(binarySerializer);
 
             var validatorPubKeys = new[] { pubKey1, pubKey2 };
-            var validatorPubKeyRedisKeys = validatorPubKeys.Select(pubKey => (RedisKey)pubKey.BuildStateValidatorKey()).ToArray();
+            var validatorPubKeysRedisKeys = validatorPubKeys.Select(pubKey => (RedisKey)pubKey.BuildStateValidatorKey()).ToArray();
+            
+            var redisDbContextMock = AutoMockContainer.GetMock<IRedisDbContext>();
 
             redisDbContextMock
                 .Setup(m => m.Get(It.Is<RedisKey>(b => b == DataEntryPrefix.StValidatorPublicKeys.ToString())))
                 .ReturnsAsync(binarySerializer.Serialize(validatorPubKeys));
-
             redisDbContextMock
-                .Setup(m => m.GetMany(It.Is<RedisKey[]>(b => b == validatorPubKeyRedisKeys)))
-                .ReturnsAsync(new Dictionary<RedisKey, RedisValue> { { pubKey1.BuildStateValidatorKey(), binarySerializer.Serialize(validator1) }, { pubKey2.BuildStateValidatorKey(), binarySerializer.Serialize(validator2) } });
+                .Setup(m => m.GetMany(It.Is<RedisKey[]>(b => b.SequenceEqual(validatorPubKeysRedisKeys))))
+                .ReturnsAsync(new Dictionary<RedisKey, RedisValue>
+                {
+                    { pubKey1.BuildStateValidatorKey(), binarySerializer.Serialize(validator1) },
+                    { pubKey2.BuildStateValidatorKey(), binarySerializer.Serialize(validator2) }
+                });
 
             
             var testee = AutoMockContainer.Create<RedisDbBinaryRepository>();

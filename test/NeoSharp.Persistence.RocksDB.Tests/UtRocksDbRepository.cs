@@ -432,20 +432,25 @@ namespace NeoSharp.Persistence.RocksDB.Tests
 
             var binarySerializer = BinarySerializer.Default;
 
-            var rocksDbContextMock = AutoMockContainer.GetMock<IRocksDbContext>();
+            AutoMockContainer.Register(binarySerializer);
 
             var validatorPubKeys = new[] { pubKey1, pubKey2 };
             var validatorPubKeysRocksDbKeys = validatorPubKeys.Select(pubKey => pubKey.BuildStateValidatorKey()).ToArray();
 
             var validatorPubKeysRocksDbKey = new[] {(byte) DataEntryPrefix.StValidatorPublicKeys};
 
+            var rocksDbContextMock = AutoMockContainer.GetMock<IRocksDbContext>();
+
             rocksDbContextMock
                 .Setup(m => m.Get(It.Is<byte[]>(b => b.SequenceEqual(validatorPubKeysRocksDbKey))))
                 .ReturnsAsync(binarySerializer.Serialize(validatorPubKeys));
-
             rocksDbContextMock
-                .Setup(m => m.GetMany(It.Is<byte[][]>(b => b == validatorPubKeysRocksDbKeys)))
-                .ReturnsAsync(new Dictionary<byte[], byte[]> { { pubKey1.BuildStateValidatorKey(), binarySerializer.Serialize(validator1) }, { pubKey2.BuildStateValidatorKey(), binarySerializer.Serialize(validator2) } });
+                .Setup(m => m.GetMany(It.Is<IEnumerable<byte[]>>(b => AreEqual(b, validatorPubKeysRocksDbKeys))))
+                .ReturnsAsync(new Dictionary<byte[], byte[]>
+                {
+                    { pubKey1.BuildStateValidatorKey(), binarySerializer.Serialize(validator1) },
+                    { pubKey2.BuildStateValidatorKey(), binarySerializer.Serialize(validator2) }
+                });
             
 
             var testee = AutoMockContainer.Create<RocksDbRepository>();
@@ -453,6 +458,27 @@ namespace NeoSharp.Persistence.RocksDB.Tests
             var result = await testee.GetValidators();
 
             result.Should().BeEquivalentTo(validator1, validator2);
+        }
+
+        private static bool AreEqual(IEnumerable<byte[]> a, IEnumerable<byte[]> b)
+        {
+            var aArray = a.ToArray();
+            var bArray = b.ToArray();
+
+            if (aArray.Length != bArray.Length)
+            {
+                return false;
+            }
+
+            for (int i = 0; i < aArray.Length; i++)
+            {
+                if (!aArray[i].SequenceEqual(bArray[i]))
+                {
+                    return false;
+                }
+            }
+            
+            return true;
         }
 
         [TestMethod]
