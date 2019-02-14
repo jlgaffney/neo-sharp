@@ -6,6 +6,7 @@ using System.Net;
 using FluentAssertions;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using NeoSharp.BinarySerialization;
+using NeoSharp.Core.Cryptography;
 using NeoSharp.Core.Extensions;
 using NeoSharp.Core.Messaging.Messages;
 using NeoSharp.Core.Models;
@@ -14,6 +15,7 @@ using NeoSharp.Core.Test.Types;
 using NeoSharp.Cryptography;
 using NeoSharp.TestHelpers;
 using NeoSharp.Types;
+using NeoSharp.Types.ExtensionMethods;
 
 namespace NeoSharp.Core.Test.Serializers
 {
@@ -21,7 +23,7 @@ namespace NeoSharp.Core.Test.Serializers
     public class UtBinarySerializer : TestBase
     {
         private IBinarySerializer _serializer;
-
+        
         [TestInitialize]
         public void WarmUpSerializer()
         {
@@ -447,6 +449,17 @@ namespace NeoSharp.Core.Test.Serializers
             var copy = _serializer.Deserialize<UInt160>(_serializer.Serialize(original));
 
             Assert.AreEqual(original, copy);
+        }
+        
+        [TestMethod]
+        public void SerializeDeserialize_ECPoint()
+        {
+            var pubKeyBytes = "0238356c74a1ab4d40df857b790e4232180e2f99f5c78468c150d0903a3e5d2b6f".HexToBytes();
+
+            var original = new ECPoint(pubKeyBytes);
+            var copy = _serializer.Deserialize<ECPoint>(_serializer.Serialize(original));
+
+            Assert.IsTrue(original.EncodedData.SequenceEqual(copy.EncodedData));
         }
 
         [TestMethod]
